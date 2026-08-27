@@ -45,6 +45,7 @@ class SettingsRepository {
     String? branchLogo,
     String? branchSign,
     String? branchTC,
+    String? branchDefault,
     File? logoFile,
     File? signFile,
   }) async {
@@ -66,6 +67,9 @@ class SettingsRepository {
       }
       if (branchTC != null && branchTC.trim().isNotEmpty) {
         fields['branch_t_c'] = branchTC.trim();
+      }
+      if (branchDefault != null && branchDefault.trim().isNotEmpty) {
+        fields['branch_default'] = branchDefault.trim();
       }
       if (branchLogo != null && branchLogo.trim().isNotEmpty && logoFile == null) {
         fields['branch_logo'] = branchLogo.trim();
@@ -116,6 +120,7 @@ class SettingsRepository {
       'branch_logo': (branchLogo != null && branchLogo.trim().isNotEmpty) ? branchLogo.trim() : null,
       'branch_sign': (branchSign != null && branchSign.trim().isNotEmpty) ? branchSign.trim() : null,
       'branch_t_c': (branchTC != null && branchTC.trim().isNotEmpty) ? branchTC.trim() : null,
+      'branch_default': (branchDefault != null && branchDefault.trim().isNotEmpty) ? branchDefault.trim() : null,
     };
 
     final response = await _apiClient.put(
