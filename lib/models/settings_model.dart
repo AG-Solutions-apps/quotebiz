@@ -45,6 +45,7 @@ class BranchSettings {
   final String? branchSign;
   final String? branchSignName;
   final String? branchTC;
+  final String? branchDefault;
 
   BranchSettings({
     this.branchName,
@@ -59,6 +60,7 @@ class BranchSettings {
     this.branchSign,
     this.branchSignName,
     this.branchTC,
+    this.branchDefault,
   });
 
   factory BranchSettings.fromJson(Map<String, dynamic> json) {
@@ -75,6 +77,7 @@ class BranchSettings {
       branchSign: json['branch_sign']?.toString(),
       branchSignName: json['branch_sign_name']?.toString(),
       branchTC: json['branch_t_c']?.toString(),
+      branchDefault: json['branch_default']?.toString(),
     );
   }
 
@@ -91,5 +94,6 @@ class BranchSettings {
         'branch_sign': branchSign,
         'branch_sign_name': branchSignName,
         'branch_t_c': branchTC,
+        'branch_default': branchDefault,
       };
 }

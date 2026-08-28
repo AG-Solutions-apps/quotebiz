@@ -37,7 +37,6 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
-  HeaderDisplayMode _selectedHeaderMode = HeaderDisplayMode.branchNameOnly;
   double _currentZoom = 1.0;
   bool _hasInitialScaleSet = false;
 
@@ -72,6 +71,17 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  HeaderDisplayMode _getHeaderMode(BranchSettings? branch) {
+    final def = branch?.branchDefault?.toLowerCase().trim();
+    if (def == 'text' || def == 'only_text' || def == 'branchnameonly') {
+      return HeaderDisplayMode.branchNameOnly;
+    } else if (def == 'logo' || def == 'only_logo' || def == 'logoonly') {
+      return HeaderDisplayMode.logoOnly;
+    } else {
+      return HeaderDisplayMode.logoAndName;
     }
   }
 
@@ -399,8 +409,9 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
 
   pw.Widget _buildPdfHeaderLeft(BranchSettings? branch, Uint8List? logoBytes) {
     final branchName = branch?.branchName ?? 'QuoteBiz';
+    final mode = _getHeaderMode(branch);
 
-    switch (_selectedHeaderMode) {
+    switch (mode) {
       case HeaderDisplayMode.branchNameOnly:
         return pw.Text(
           branchName,
@@ -523,198 +534,87 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
                     ],
                   ),
                 )
-              : Column(
+              : Stack(
                   children: [
-                    // 1. Top Header Selector Bar (Horizontally scrollable with zero overflow)
-                    _buildHeaderSelectorCard(),
+                    InteractiveViewer(
+                      transformationController: _transformController,
+                      constrained: false, // Prevents parent screen width from squishing A4 paper
+                      minScale: 0.25,
+                      maxScale: 3.0,
+                      boundaryMargin: const EdgeInsets.all(100),
+                      panEnabled: true,
+                      scaleEnabled: true,
+                      onInteractionUpdate: (_) {
+                        // Sync current zoom percentage badge
+                        final scale = _transformController.value.getMaxScaleOnAxis();
+                        if ((scale - _currentZoom).abs() > 0.02) {
+                          setState(() {
+                            _currentZoom = scale;
+                          });
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: _buildA4QuotationPaper(),
+                      ),
+                    ),
 
-                    // 2. Interactive Unconstrained A4 Sheet Canvas
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          InteractiveViewer(
-                            transformationController: _transformController,
-                            constrained: false, // Prevents parent screen width from squishing A4 paper
-                            minScale: 0.25,
-                            maxScale: 3.0,
-                            boundaryMargin: const EdgeInsets.all(100),
-                            panEnabled: true,
-                            scaleEnabled: true,
-                            onInteractionUpdate: (_) {
-                              // Sync current zoom percentage badge
-                              final scale = _transformController.value.getMaxScaleOnAxis();
-                              if ((scale - _currentZoom).abs() > 0.02) {
-                                setState(() {
-                                  _currentZoom = scale;
-                                });
-                              }
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: _buildA4QuotationPaper(),
+                    // Floating Zoom Controls (Bottom Right)
+                    Positioned(
+                      bottom: 24,
+                      right: 24,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-
-                          // Floating Zoom Controls (Bottom Right)
-                          Positioned(
-                            bottom: 24,
-                            right: 24,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.18),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove_rounded, size: 20),
+                              tooltip: 'Zoom Out',
+                              onPressed: _zoomOut,
+                            ),
+                            InkWell(
+                              onTap: _resetZoom,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  '${(_currentZoom * 100).toInt()}%',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: AppColors.textPrimary,
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove_rounded, size: 20),
-                                    tooltip: 'Zoom Out',
-                                    onPressed: _zoomOut,
-                                  ),
-                                  InkWell(
-                                    onTap: _resetZoom,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                                      child: Text(
-                                        '${(_currentZoom * 100).toInt()}%',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add_rounded, size: 20),
-                                    tooltip: 'Zoom In',
-                                    onPressed: _zoomIn,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  IconButton(
-                                    icon: const Icon(Icons.restart_alt_rounded, size: 20),
-                                    tooltip: 'Reset Zoom (100%)',
-                                    onPressed: _resetZoom,
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            IconButton(
+                              icon: const Icon(Icons.add_rounded, size: 20),
+                              tooltip: 'Zoom In',
+                              onPressed: _zoomIn,
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.restart_alt_rounded, size: 20),
+                              tooltip: 'Reset Zoom (100%)',
+                              onPressed: _resetZoom,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-    );
-  }
-
-  Widget _buildHeaderSelectorCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: [
-            const Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
-            const Text(
-              'Header Style:',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 14),
-            _buildRadioOption('Only Branch Name', HeaderDisplayMode.branchNameOnly),
-            const SizedBox(width: 10),
-            _buildRadioOption('Only Logo', HeaderDisplayMode.logoOnly),
-            const SizedBox(width: 10),
-            _buildRadioOption('Logo & Branch Name', HeaderDisplayMode.logoAndName),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadioOption(String label, HeaderDisplayMode mode) {
-    final isSelected = _selectedHeaderMode == mode;
-
-    return InkWell(
-      onTap: () => setState(() => _selectedHeaderMode = mode),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : const Color(0xFFCBD5E1),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : const Color(0xFF94A3B8),
-                  width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -830,23 +730,23 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
           ),
           const SizedBox(height: 32),
 
-          // 3. Salutation Text
+          // 3. Salutation
           const Text(
             'Dear Sir/Mam,',
-            style: TextStyle(fontSize: 13, color: Color(0xFF334155)),
+            style: TextStyle(fontSize: 14, color: Color(0xFF334155)),
           ),
           const SizedBox(height: 6),
           const Text(
             'Thank you for your valuable inquiry. We are pleased to quote as below:',
-            style: TextStyle(fontSize: 13, color: Color(0xFF334155)),
+            style: TextStyle(fontSize: 14, color: Color(0xFF334155)),
           ),
           const SizedBox(height: 24),
 
-          // 4. Items Table
+          // 4. Quotation Items Table
           _buildItemsTable(data.subs),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // 5. Grand Total Row (With solid top border)
+          // 5. Grand Total Summary Row
           Align(
             alignment: Alignment.centerRight,
             child: Container(
@@ -869,7 +769,7 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
                   Text(
                     _formatCurrency(data.totalAmount),
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
                     ),
@@ -878,7 +778,7 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
 
           // 6. Remarks
           if (data.quotationRemarks != null && data.quotationRemarks!.isNotEmpty) ...[
@@ -892,25 +792,21 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
           // 7. Terms & Conditions
           const Text(
             'Terms & Conditions:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
           ),
           const SizedBox(height: 8),
           _buildTermsAndConditions(branch?.branchTC),
 
           const SizedBox(height: 48),
 
-          // 8. Authorized Signature Section (Bottom Right)
+          // 8. Bottom Authorized Signature Block
           Align(
-            alignment: Alignment.centerRight,
+            alignment: Alignment.bottomRight,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'For, ${branch?.branchName ?? 'Company'}',
+                  'For, ${branch?.branchName ?? 'QuoteBiz'}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -938,10 +834,11 @@ class _QuotationPreviewScreenState extends State<QuotationPreviewScreen> {
   }
 
   Widget _buildPreviewHeaderLeft(BranchSettings? branch) {
-    final branchName = branch?.branchName ?? 'Demo';
+    final branchName = branch?.branchName ?? 'QuoteBiz';
     final logoUrl = ApiConstants.getBranchImageUrl(branch?.branchLogo);
+    final mode = _getHeaderMode(branch);
 
-    switch (_selectedHeaderMode) {
+    switch (mode) {
       case HeaderDisplayMode.branchNameOnly:
         return Text(
           branchName,

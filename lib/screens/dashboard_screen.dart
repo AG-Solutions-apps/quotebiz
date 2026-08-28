@@ -277,8 +277,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _buildDashboardTabContent(),
           const ClientListScreen(isEmbedded: true),
-          const ItemListScreen(isEmbedded: true),
           const QuotationListScreen(isEmbedded: true),
+          const ItemListScreen(isEmbedded: true),
           const SettingsScreen(),
         ],
       ),
@@ -311,15 +311,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               activeIcon: Icon(Icons.people_alt_rounded),
               label: 'Clients',
             ),
+             BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long_rounded),
+              label: 'Quotes',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2_outlined),
               activeIcon: Icon(Icons.inventory_2_rounded),
               label: 'Items',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Quotes',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
@@ -380,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const Text(
-                'CRM Suite',
+                'QUOTEBIZ',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -679,7 +679,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.description_outlined,
       iconColor: AppColors.blue,
       iconBgColor: AppColors.blueLight,
-      onTap: () => setState(() => _selectedTabIndex = 3),
+      onTap: () => setState(() => _selectedTabIndex = 2),
     );
 
     final card2 = StatCard(
@@ -688,7 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.access_time_rounded,
       iconColor: AppColors.warning,
       iconBgColor: AppColors.warningBg,
-      onTap: () => setState(() => _selectedTabIndex = 3),
+      onTap: () => setState(() => _selectedTabIndex = 2),
     );
 
     final card3 = StatCard(
@@ -697,7 +697,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.check_circle_outline_rounded,
       iconColor: AppColors.success,
       iconBgColor: AppColors.successBg,
-      onTap: () => setState(() => _selectedTabIndex = 3),
+      onTap: () => setState(() => _selectedTabIndex = 2),
     );
 
     final card4 = StatCard(
@@ -706,7 +706,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.trending_up_rounded,
       iconColor: AppColors.cyanDark,
       iconBgColor: AppColors.cyanLight,
-      onTap: () => setState(() => _selectedTabIndex = 3),
+      onTap: () => setState(() => _selectedTabIndex = 2),
     );
 
     if (isWideScreen) {
@@ -810,7 +810,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      _selectedTabIndex = 3;
+                      _selectedTabIndex = 2;
                     });
                   },
                   child: const Text('View All'),
